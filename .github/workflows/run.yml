@@ -5,17 +5,15 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 워닝에서 요구한 환경변수 강제 적용
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      TARGET_URL: ${{ secrets.TARGET_URL }}
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,13 +23,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install playwright requests
+          # 여기에 stealth 라이브러리를 정확히 추가합니다.
+          pip install playwright requests playwright-stealth 
           playwright install chromium
           
       - name: Run script
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TARGET_URL: ${{ secrets.TARGET_URL }}
         run: python main.py
-
-      - name: Install dependencies
-        run: |
-          pip install playwright requests playwright-stealth # 여기 stealth 추가!
-          playwright install chromium
