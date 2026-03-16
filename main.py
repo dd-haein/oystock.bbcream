@@ -4,8 +4,7 @@ import os
 import requests
 from playwright.async_api import async_playwright
 
-# 시작 로그
-print("🎬 [시스템 시작] 재고 확인 성공률 보정 버전을 실행합니다.")
+print("🎬 [시스템 시작] 재시도 로직이 추가된 정밀 분석 버전을 실행합니다.")
 
 TARGET_URL = os.environ.get("TARGET_URL")
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
@@ -14,41 +13,32 @@ async def get_inventory():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            viewport={'width': 1280, 'height': 800},
+            viewport={'width': 1280, 'height': 1024},
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
         page = await context.new_page()
         
         results = []
         try:
-            print(f"🚀 {TARGET_URL} 접속 중...")
+            print(f"🚀 접속 중: {TARGET_URL}")
             await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=60000)
-            
-            # 보안 확인 및 초기 로딩 대기
-            print("⏳ 안정적인 로딩을 위해 10초간 대기합니다...")
             await asyncio.sleep(10) 
 
             opt_btn_sel = 'button:has-text("선택"), button[class*="OptionSelector_btn-option"]'
-            
-            # 옵션 버튼 대기
             await page.wait_for_selector(opt_btn_sel, timeout=20000)
             await page.click(opt_btn_sel)
-            
-            # 목록 대기
             await page.wait_for_selector('li[class*="OptionSelector_option-item"]', state="visible", timeout=15000)
             
             options_count = await page.locator('li[class*="OptionSelector_option-item"]').count()
             print(f"📦 총 {options_count}개의 옵션 발견")
 
             for i in range(options_count):
-                # 목록이 닫혔는지 체크
                 if not await page.locator('li[class*="OptionSelector_option-item"]').first.is_visible():
                     await page.click(opt_btn_sel)
-                    await asyncio.sleep(1.5)
+                    await asyncio.sleep(2)
 
                 items = await page.locator('li[class*="OptionSelector_option-item"]').all()
                 target = items[i]
-                
                 opt_name = (await target.locator('span[class*="option-item-tit"]').inner_text()).strip()
                 print(f"🔄 [{i+1}/{options_count}] {opt_name} 분석 중...")
 
@@ -57,27 +47,35 @@ async def get_inventory():
                     results.append(f"{opt_name} : 품절")
                     continue
 
-                # --- 핵심 수정 부분: 클릭 후 대기 시간 강화 ---
+                # --- 보강된 클릭 로직 ---
+                await target.scroll_into_view_if_needed() # 화면에 잘 보이게 스크롤
                 await target.click(force=True)
                 
-                # 수량 입력창이 나타날 때까지 최대 5초간 대기 (매우 중요)
                 input_sel = 'input[data-qa-name="input-product-number"], input[class*="QuantityCounter_count"]'
-                try:
-                    # 입력창이 나타날 때까지 끈질기게 기다립니다.
-                    await page.wait_for_selector(input_sel, timeout=5000)
-                    input_field = page.locator(input_sel).first
-                    
-                    # 창이 떴어도 확실히 입력 가능할 때까지 0.5초 더 대기
+                
+                # 수량창 대기 및 재시도 (최대 2번 시도)
+                input_field = None
+                for attempt in range(2):
+                    try:
+                        await page.wait_for_selector(input_sel, timeout=4000)
+                        input_field = page.locator(input_sel).first
+                        break 
+                    except:
+                        if attempt == 0:
+                            print(f"⚠️ {opt_name} 수량창 미발견, 재클릭 시도...")
+                            await target.click(force=True)
+                        else:
+                            print(f"❌ {opt_name} 최종 수량창 확인 실패")
+
+                if input_field and await input_field.is_visible():
                     await asyncio.sleep(0.5)
-                    
                     await input_field.fill("999")
                     await page.keyboard.press("Enter")
                     
                     stock = "확인 불가"
                     try:
                         toast_sel = 'div[class*="Toast_toast-inner"]'
-                        # 토스트 메시지도 조금 더 여유 있게 대기
-                        await page.wait_for_selector(toast_sel, timeout=5000)
+                        await page.wait_for_selector(toast_sel, timeout=4000)
                         toast_text = await page.inner_text(toast_sel)
                         if "재고" in toast_text:
                             match = re.search(r'\d+', toast_text)
@@ -88,16 +86,13 @@ async def get_inventory():
                     print(f"✅ {opt_name} : {stock}")
                     results.append(f"{opt_name} : {stock}")
                     
-                    # 삭제 버튼 클릭 (다음 옵션 확인을 위해 비우기)
+                    # 삭제 버튼 클릭 후 확실히 사라질 때까지 대기
                     del_btn = page.locator('button[class*="OptionSelector_btn-delete"]').first
                     if await del_btn.is_visible():
                         await del_btn.click()
-                        await asyncio.sleep(1) # 삭제 처리 대기
-                        
-                except Exception as e:
-                    print(f"⚠️ {opt_name} 수량창 대기 중 타임아웃: {e}")
+                        await asyncio.sleep(1.5)
+                else:
                     results.append(f"{opt_name} : 수량 확인 불가")
-                    # 에러 시 드롭다운이 꼬이지 않게 Escape 한 번 눌러줌
                     await page.keyboard.press("Escape")
                     await asyncio.sleep(1)
 
