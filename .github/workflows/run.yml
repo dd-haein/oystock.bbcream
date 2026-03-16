@@ -2,26 +2,24 @@ name: Hourly Inventory Check
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 매 정각 실행
-  workflow_dispatch:      # 수동 실행 버튼
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Node.js 24 환경을 강제로 사용하도록 설정 (경고 문구 반영)
+    # 워닝에서 요구한 환경변수 강제 적용
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
     steps:
-      # v3 -> v4로 업데이트
       - uses: actions/checkout@v4
       
-      # v4 -> v5로 업데이트
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # 파이썬 버전도 최신 안정화 버전으로 권장
+          python-version: '3.11'
           
       - name: Install dependencies
         run: |
