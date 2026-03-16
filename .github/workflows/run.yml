@@ -2,12 +2,11 @@ name: Hourly Inventory Check
 
 on:
   schedule:
-    # 매시간 정각에 실행 (UTC 기준 0분)
+    # 정각 실행하도록 설정 (깃허브 상황에 따라 약간의 지연은 발생할 수 있습니다)
     - cron: '0 * * * *'
-  # 필요할 때 수동으로 실행 가능하게 설정
+  # 수동 실행 버튼 활성화
   workflow_dispatch:
 
-# 2026년 GitHub 정책 대응: Node 20 경고 해결을 위해 24 버전 강제 사용 설정
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
@@ -26,13 +25,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # stealth 라이브러리를 제외하고 기본 필수 라이브러리만 설치합니다.
-          pip install playwright requests
+          # 구글 시트 연동을 위한 gspread와 oauth2client를 추가했습니다.
+          pip install playwright requests gspread oauth2client
           playwright install chromium
           
       - name: Run script
         env:
-          # GitHub Secrets에 등록한 이름과 똑같아야 합니다.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TARGET_URL: ${{ secrets.TARGET_URL }}
+          # 구글 클라우드에서 받은 JSON 키 내용을 여기에 연결합니다.
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: python main.py
