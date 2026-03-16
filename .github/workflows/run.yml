@@ -2,9 +2,12 @@ name: Hourly Inventory Check
 
 on:
   schedule:
+    # 매시간 정각에 실행 (UTC 기준 0분)
     - cron: '0 * * * *'
+  # 필요할 때 수동으로 실행 가능하게 설정
   workflow_dispatch:
 
+# 2026년 GitHub 정책 대응: Node 20 경고 해결을 위해 24 버전 강제 사용 설정
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
@@ -22,11 +25,14 @@ jobs:
           
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
+          # stealth 라이브러리를 제외하고 기본 필수 라이브러리만 설치합니다.
           pip install playwright requests
           playwright install chromium
           
       - name: Run script
         env:
+          # GitHub Secrets에 등록한 이름과 똑같아야 합니다.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TARGET_URL: ${{ secrets.TARGET_URL }}
         run: python main.py
