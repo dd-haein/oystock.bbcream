@@ -23,8 +23,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # 여기에 stealth 라이브러리를 정확히 추가합니다.
-          pip install playwright requests playwright-stealth 
           playwright install chromium
           
       - name: Run script
