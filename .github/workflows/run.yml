@@ -1,0 +1,27 @@
+name: Hourly Inventory Check
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # 매 정각 실행
+  workflow_dispatch:      # 수동 실행 버튼 활성화
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          pip install playwright requests
+          playwright install chromium
+          
+      - name: Run script
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python main.py
