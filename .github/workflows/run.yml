@@ -12,6 +12,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      TARGET_URL: ${{ secrets.TARGET_URL }}
 
     steps:
       - uses: actions/checkout@v4
