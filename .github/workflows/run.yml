@@ -30,3 +30,8 @@ jobs:
           
       - name: Run script
         run: python main.py
+
+      - name: Install dependencies
+        run: |
+          pip install playwright requests playwright-stealth # 여기 stealth 추가!
+          playwright install chromium
