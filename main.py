@@ -5,7 +5,7 @@ import requests
 from playwright.async_api import async_playwright
 
 # --- 설정 ---
-TARGET_URL = "https://www.oliveyoung.co.kr/store/goods/getGoodsDetail.do?goodsNo=A000000233123" 
+TARGET_URL = os.environ.get("TARGET_URL")
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 
 async def get_inventory():
