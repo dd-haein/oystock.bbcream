@@ -2,8 +2,8 @@ name: Hourly Inventory Check
 
 on:
   schedule:
-    # 정각 실행하도록 설정 (깃허브 상황에 따라 약간의 지연은 발생할 수 있습니다)
-    - cron: '0 * * * *'
+    # 30분마다 실행하도록 설정 (깃허브 상황에 따라 약간의 지연은 발생할 수 있습니다)
+    - cron: '30 * * * *'
   # 수동 실행 버튼 활성화
   workflow_dispatch:
 
