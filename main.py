@@ -4,7 +4,7 @@ import os
 import requests
 import json
 import gspread
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from oauth2client.service_account import ServiceAccountCredentials
 from playwright.async_api import async_playwright
 
@@ -32,7 +32,8 @@ def update_google_sheet(inventory_dict):
         doc = client.open_by_url(sheet_url)
         worksheet = doc.get_worksheet(0)
 
-        now = datetime.now()
+        KST = timezone(timedelta(hours=9))
+        now = datetime.now(KST)
         date_str = now.strftime("%Y-%m-%d")
         time_str = now.strftime("%H:%M:%S")
 
