@@ -73,7 +73,7 @@ async def get_inventory():
             await asyncio.sleep(10)
 
             opt_btn_sel = 'button:has-text("선택"), button[class*="OptionSelector_btn-option"]'
-            await page.wait_for_selector(opt_btn_sel, timeout=20000)
+            await page.wait_for_selector(opt_btn_sel, timeout=50000)
             await page.click(opt_btn_sel)
             await page.wait_for_selector('li[class*="OptionSelector_option-item"]', state="visible", timeout=15000)
             
