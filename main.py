@@ -73,7 +73,7 @@ async def get_inventory():
             await asyncio.sleep(10)
 
             opt_btn_sel = 'button:has-text("선택"), button[class*="OptionSelector_btn-option"]'
-            await page.wait_for_selector(opt_btn_sel, timeout=50000)
+            await page.wait_for_selector(opt_btn_sel, timeout=60000)
             await page.click(opt_btn_sel)
             await page.wait_for_selector('li[class*="OptionSelector_option-item"]', state="visible", timeout=15000)
             
@@ -100,7 +100,7 @@ async def get_inventory():
                 
                 input_sel = 'input[data-qa-name="input-product-number"], input[class*="QuantityCounter_count"]'
                 try:
-                    await page.wait_for_selector(input_sel, timeout=5000)
+                    await page.wait_for_selector(input_sel, timeout=10000)
                     input_field = page.locator(input_sel).first
                     await input_field.fill("999")
                     await page.keyboard.press("Enter")
@@ -108,7 +108,7 @@ async def get_inventory():
                     stock_res = "확인 불가"
                     try:
                         toast_sel = 'div[class*="Toast_toast-inner"]'
-                        await page.wait_for_selector(toast_sel, timeout=4000)
+                        await page.wait_for_selector(toast_sel, timeout=10000)
                         t_text = await page.inner_text(toast_sel)
                         if "재고" in t_text:
                             m = re.search(r'\d+', t_text)
